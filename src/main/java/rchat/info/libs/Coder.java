@@ -348,4 +348,53 @@ public class Coder {
         return queue.poll().getTableElement();
     }
 
+    public static class HilbertMurielTableElement {
+        public byte symbol = 0;
+        public double p = 0;
+        public double d = 0;
+        public double delta = 0;
+        public int logp = 0;
+        public int code = 0;
+        public int amount = 0;
+
+        public HilbertMurielTableElement(byte symbol) {this.symbol = symbol;}
+    }
+
+    public static List<HilbertMurielTableElement> getHilbertMurielTableElement(List<Byte> input) {
+        List<HilbertMurielTableElement> result = new ArrayList<>();
+        List<TableElement> segTable = getSegmentisedTable(input);
+
+        if (segTable.isEmpty()) return new ArrayList<>();
+
+        HilbertMurielTableElement hmElement = new HilbertMurielTableElement(segTable.get(0).symbol);
+        hmElement.p = (1.0 * segTable.get(0).amount) / input.size();
+        hmElement.delta = hmElement.p / 2;
+        hmElement.amount = segTable.get(0).amount;
+        int i = 0;
+        while (true) {
+            hmElement.logp = (int) Math.ceil(-(Math.log(hmElement.p) / Math.log(2))) + 1;
+
+            double tmp = hmElement.delta;
+            for (int j = 0; j < hmElement.logp; j++) {
+                hmElement.code = hmElement.code * 2 + (((int) tmp ) & 1);
+                tmp *= 2;
+            }
+
+            result.add(hmElement);
+
+            i++;
+            if (i >= segTable.size()) break;
+            TableElement element = segTable.get(i);
+            hmElement = new HilbertMurielTableElement(segTable.get(i).symbol);
+            hmElement.amount = segTable.get(i).amount;
+            hmElement.p = (1.0 * element.amount) / input.size();
+            for (int j = 0; j < i; j++) {
+                hmElement.d += result.get(j).p;
+            }
+            hmElement.delta = hmElement.d + hmElement.p / 2;
+        }
+
+        return result;
+    }
+
 }
