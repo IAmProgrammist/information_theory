@@ -101,15 +101,15 @@ public class Coder {
         }
     }
 
-    public static class TableElement {
+    public static class TableElement<T> {
         // Сам байт
-        public byte symbol;
+        public T symbol;
         // Количество повторений байта
         public int amount;
         // Код в виде массива булеанов
         public List<Boolean> code;
 
-        public TableElement(byte symbol) {
+        public TableElement(T symbol) {
             this.symbol = symbol;
             this.amount = 1;
             this.code = new ArrayList<>();
@@ -127,10 +127,10 @@ public class Coder {
         }
     }
 
-    private static List<Byte> getEncodedFromTable(List<Byte> input, List<TableElement> table) {
+    private static List<Byte> getEncodedFromTable(List<Byte> input, List<TableElement<Byte>> table) {
         // Создаём буффер байтов
         List<Byte> result = new ArrayList<>();
-        Map<Byte, TableElement> codes = table.stream()
+        Map<Byte, TableElement<Byte>> codes = table.stream()
                 .collect(Collectors.toMap(tableElement -> tableElement.symbol, tableElement -> tableElement));
 
         int bit = 0;
@@ -140,7 +140,7 @@ public class Coder {
         // Для каждого элемента в последовательности
         for (Byte in : input) {
             // Поулчаем элемент в таблице Шеннона Фано
-            TableElement elementSchennon = codes.get(in);
+            TableElement<Byte> elementSchennon = codes.get(in);
 
             // Записываем элемент в буффер
             for (int i = elementSchennon.code.size() - 1; i >= 0; i--) {
@@ -182,19 +182,19 @@ public class Coder {
     }
 
     public static List<Byte> getEncodedSchennonFano(List<Byte> input) {
-        List<TableElement> table = getSchennonFanoTable(input);
+        List<TableElement<Byte>> table = getSchennonFanoTable(input);
 
         return getEncodedFromTable(input, table);
     }
 
     public static List<Byte> getEncodedHuffman(List<Byte> input) {
-        List<TableElement> table = getHuffmanTable(input);
+        List<TableElement<Byte>> table = getHuffmanTable(input);
 
         return getEncodedFromTable(input, table);
     }
 
-    public static List<TableElement> getSchennonFanoTable(List<Byte> input) {
-        List<TableElement> table = getSegmentisedTable(input);
+    public static List<TableElement<Byte>> getSchennonFanoTable(List<Byte> input) {
+        List<TableElement<Byte>> table = getSegmentisedTable(input);
 
         // Начинаем обработку таблицы
         getSchennonFanoTable(table, 0, table.size());
@@ -202,17 +202,18 @@ public class Coder {
         return table;
     }
 
-    private static List<TableElement> getSegmentisedTable(List<Byte> input) {
+
+    private static <T> List<TableElement<T>> getSegmentisedTable(List<T> input) {
         // Подготовим таблицу для дальнейшего использования
-        List<TableElement> table = new ArrayList<>();
-        for (Byte symbol : input) {
+        List<TableElement<T>> table = new ArrayList<>();
+        for (T symbol : input) {
             // Ищем уникальные байты. Если байт есть - увеличиваем его кол-во в таблице,
             // иначе - добавляем новый элемент.
-            Optional<TableElement> result = table.stream().filter((el) -> el.symbol == symbol).findAny();
+            Optional<TableElement<T>> result = table.stream().filter((el) -> el.symbol.equals(symbol)).findAny();
             if (result.isPresent()) {
                 result.get().amount++;
             } else {
-                table.add(new TableElement(symbol));
+                table.add(new TableElement<T>(symbol));
             }
         }
 
@@ -222,7 +223,7 @@ public class Coder {
         return table;
     }
 
-    private static void getSchennonFanoTable(List<TableElement> table, int beginIndex, int endIndex) {
+    private static void getSchennonFanoTable(List<TableElement<Byte>> table, int beginIndex, int endIndex) {
         // Условия выхода из рекурсии
         if (endIndex - beginIndex <= 1) return;
         if (endIndex - beginIndex == 2) {
@@ -248,7 +249,7 @@ public class Coder {
         getSchennonFanoTable(table, separateIndex, endIndex);
     }
 
-    private static int getSeparateIndex(List<TableElement> table, int beginIndex, int endIndex) {
+    private static int getSeparateIndex(List<TableElement<Byte>> table, int beginIndex, int endIndex) {
         // Посчитаем сумму всей таблицы
         int sum = 0;
         for (int i = beginIndex; i < endIndex; i++) {
@@ -280,13 +281,13 @@ public class Coder {
     }
 
     private static class HuffmanTableElement {
-        TableElement self = null;
+        TableElement<Byte> self = null;
         HuffmanTableElement left = null;
         HuffmanTableElement right = null;
         int amount = 0;
 
         // Элемент дерева - лист
-        public HuffmanTableElement(TableElement self) {
+        public HuffmanTableElement(TableElement<Byte> self) {
             this.self = self;
             this.amount = self.amount;
         }
@@ -299,7 +300,7 @@ public class Coder {
             this.amount = left.amount + right.amount;
         }
 
-        List<TableElement> getTableElement() {
+        List<TableElement<Byte>> getTableElement() {
             if (self != null) {
                 return List.of(new TableElement[]{self});
             }
@@ -307,8 +308,8 @@ public class Coder {
             return getTableElement(List.of());
         }
 
-        private List<TableElement> getTableElement(List<Boolean> prefix) {
-            List<TableElement> result = new ArrayList<>();
+        private List<TableElement<Byte>> getTableElement(List<Boolean> prefix) {
+            List<TableElement<Byte>> result = new ArrayList<>();
 
             // Проход по дереву в глубину, формируется код
             if (self == null) {
@@ -328,7 +329,7 @@ public class Coder {
         }
     }
 
-    public static List<TableElement> getHuffmanTable(List<Byte> input) {
+    public static List<TableElement<Byte>> getHuffmanTable(List<Byte> input) {
         Queue<HuffmanTableElement> queue = new PriorityQueue<>(
                 Comparator.comparingInt(o -> o.amount));
         // Создаём приоритетную очередь
@@ -362,7 +363,7 @@ public class Coder {
 
     public static List<HilbertMurielTableElement> getHilbertMurielTableElement(List<Byte> input) {
         List<HilbertMurielTableElement> result = new ArrayList<>();
-        List<TableElement> segTable = getSegmentisedTable(input);
+        List<TableElement<Byte>> segTable = getSegmentisedTable(input);
 
         if (segTable.isEmpty()) return new ArrayList<>();
 
@@ -384,7 +385,7 @@ public class Coder {
 
             i++;
             if (i >= segTable.size()) break;
-            TableElement element = segTable.get(i);
+            TableElement<Byte> element = segTable.get(i);
             hmElement = new HilbertMurielTableElement(segTable.get(i).symbol);
             hmElement.amount = segTable.get(i).amount;
             hmElement.p = (1.0 * element.amount) / input.size();
@@ -395,6 +396,67 @@ public class Coder {
         }
 
         return result;
+    }
+
+    public static class ArithmeticEncodingTable<T> {
+        List<TableElement<T>> symbols = new ArrayList<>();
+        List<Double> probabilities = new ArrayList<>();
+        Double prob = 0.0;
+
+        void addNewSymbol(TableElement<T> element, Double prob) {
+            symbols.add(element);
+            probabilities.add(this.prob + prob);
+            this.prob += prob;
+        }
+
+        int length() {
+            return this.symbols.size();
+        }
+
+        AbstractMap.SimpleEntry<Double, Double> getProbabilitySpan(int index) {
+            if (index == 0) {
+                return new AbstractMap.SimpleEntry<>(0., probabilities.get(0));
+            }
+
+            return new AbstractMap.SimpleEntry<>(probabilities.get(index - 1), probabilities.get(index));
+        }
+
+        AbstractMap.SimpleEntry<Double, Double> getProbabilitySpanBySymbol(T symbol) {
+            for (int i = 0; i < length(); i++) {
+                if (symbols.get(i).symbol.equals(symbol)) return getProbabilitySpan(i);
+            }
+
+            return new AbstractMap.SimpleEntry<>(0., 0.);
+        }
+    }
+
+    public static <T> ArithmeticEncodingTable<T> getArithmeticEncodingTable(List<T> input) {
+        ArithmeticEncodingTable<T> aTable = new ArithmeticEncodingTable<>();
+        List<TableElement<T>> segTable = getSegmentisedTable(input);
+
+        for (TableElement<T> element : segTable) {
+            aTable.addNewSymbol(element, (1.0 * element.amount) / input.size());
+        }
+
+        return aTable;
+    }
+
+    public static <T> AbstractMap.SimpleEntry<Double, Double> encodeArithmeticEncodingTable(List<T> input) {
+        if (input.isEmpty()) return new AbstractMap.SimpleEntry<>(0., 0.);
+
+        ArithmeticEncodingTable<T> table = getArithmeticEncodingTable(input);
+        AbstractMap.SimpleEntry<Double, Double> answer =
+                table.getProbabilitySpanBySymbol(input.get(0));
+
+        for (int i = 1; i < input.size(); i++) {
+            AbstractMap.SimpleEntry<Double, Double> currSymbol = table.getProbabilitySpanBySymbol(input.get(i));
+
+            answer = new AbstractMap.SimpleEntry<>(
+                    answer.getKey() + (answer.getValue() - answer.getKey()) * currSymbol.getKey(),
+                    answer.getKey() + (answer.getValue() - answer.getKey()) * currSymbol.getValue());
+        }
+
+        return answer;
     }
 
 }

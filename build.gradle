@@ -37,3 +37,8 @@ task(lab4, dependsOn: 'classes', type: JavaExec) {
     main = 'rchat.info.lab4.Main'
     classpath = sourceSets.main.runtimeClasspath
 }
+
+task(lab5, dependsOn: 'classes', type: JavaExec) {
+    main = 'rchat.info.lab5.Main'
+    classpath = sourceSets.main.runtimeClasspath
+}

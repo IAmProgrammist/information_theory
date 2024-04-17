@@ -24,10 +24,10 @@ public class Main {
             bytesConverted[i] = bytesOrigin[i];
         }
 
-        List<Coder.TableElement> table = Coder.getSchennonFanoTable(List.of(bytesConverted));
+        List<Coder.TableElement<Byte>> table = Coder.getSchennonFanoTable(List.of(bytesConverted));
 
         System.out.println("Таблица: ");
-        for (Coder.TableElement element : table) {
+        for (Coder.TableElement<Byte> element : table) {
             System.out.print(element.symbol);
             System.out.print(" " + element.amount + " ");
             for (int i = 0; i < element.code.size(); i++) {
@@ -39,7 +39,7 @@ public class Main {
         System.out.println("Закодированное сообщение: ");
         String code = input;
         int sum = 0;
-        for (Coder.TableElement element : table) {
+        for (Coder.TableElement<Byte> element : table) {
             String elementCode = element.code.stream().map((el) -> el ? "1" : "0").collect(Collectors.joining(""));
             code = code.replace("" + element.symbol, elementCode);
             sum += element.amount;
@@ -52,7 +52,7 @@ public class Main {
         System.out.println("Коэффициент сжатия: " + 1.0 * uncodedLength / codedLength);
         System.out.println();
         double midLen = 0;
-        for (Coder.TableElement element : table) {
+        for (Coder.TableElement<Byte> element : table) {
             String elementCode = element.code.stream().map((el) -> el ? "1" : "0").collect(Collectors.joining(""));
             midLen += elementCode.length() * (1.0 * element.amount / sum);
         }
@@ -60,7 +60,7 @@ public class Main {
         System.out.println();
 
         double delta = 0;
-        for (Coder.TableElement element : table) {
+        for (Coder.TableElement<Byte> element : table) {
             String elementCode = element.code.stream().map((el) -> el ? "1" : "0").collect(Collectors.joining(""));
             delta += (1.0 * element.amount / sum) * (elementCode.length() - midLen) * (elementCode.length() - midLen);
         }
