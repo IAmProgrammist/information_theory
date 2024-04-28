@@ -264,7 +264,7 @@ public class Coder {
 
         // Пока сумма до разделителя меньше суммы после разделителя, будем сдвигать разделитель
         while (separateIndex < endIndex - 1 && sumAfter - table.get(separateIndex).amount -
-                (sumBefore + table.get(separateIndex).amount) > 0 ) {
+                (sumBefore + table.get(separateIndex).amount) > 0) {
             sumAfter -= table.get(separateIndex).amount;
             sumBefore += table.get(separateIndex).amount;
             separateIndex++;
@@ -358,7 +358,9 @@ public class Coder {
         public int code = 0;
         public int amount = 0;
 
-        public HilbertMurielTableElement(byte symbol) {this.symbol = symbol;}
+        public HilbertMurielTableElement(byte symbol) {
+            this.symbol = symbol;
+        }
     }
 
     public static List<HilbertMurielTableElement> getHilbertMurielTableElement(List<Byte> input) {
@@ -377,7 +379,7 @@ public class Coder {
 
             double tmp = hmElement.delta;
             for (int j = 0; j < hmElement.logp; j++) {
-                hmElement.code = hmElement.code * 2 + (((int) tmp ) & 1);
+                hmElement.code = hmElement.code * 2 + (((int) tmp) & 1);
                 tmp *= 2;
             }
 
@@ -459,4 +461,40 @@ public class Coder {
         return answer;
     }
 
+    public String LZWCompress(String input) {
+        HashMap<String, Integer> dictionary = new LinkedHashMap<>();
+        String[] data = (input + "").split("");
+        String out = "";
+        ArrayList<String> tempOut = new ArrayList<>();
+        String currentChar;
+        String phrase = data[0];
+        int code = 256;
+        for (int i = 1; i < data.length; i++) {
+            currentChar = data[i];
+            if (dictionary.get(phrase + currentChar) != null) {
+                phrase += currentChar;
+            } else {
+                if (phrase.length() > 1) {
+                    tempOut.add(Character.toString((char) dictionary.get(phrase).intValue()));
+                } else {
+                    tempOut.add(Character.toString((char) Character.codePointAt(phrase, 0)));
+                }
+
+                dictionary.put(phrase + currentChar, code);
+                code++;
+                phrase = currentChar;
+            }
+        }
+
+        if (phrase.length() > 1) {
+            tempOut.add(Character.toString((char) dictionary.get(phrase).intValue()));
+        } else {
+            tempOut.add(Character.toString((char) Character.codePointAt(phrase, 0)));
+        }
+
+        for (String outchar : tempOut) {
+            out += outchar;
+        }
+        return out;
+    }
 }
